@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabel Rumus Saldo Awal Kas</title>
+    <title>Kalkulator Saldo Awal Kas</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,83 +17,156 @@
 
         table {
             border-collapse: collapse;
-            width: 400px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 420px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            background-color: #ffffff;
         }
 
         th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
+            border: 1px solid #000000;
+            padding: 8px 12px;
+            font-size: 14px;
         }
 
+        /* Baris Header */
         .header-row {
             background-color: #00FF00;
             text-align: center;
             font-weight: bold;
+            color: #000000;
         }
 
+        /* Baris Input Data Standar (Kuning) */
         .data-row {
             background-color: #FFD700;
         }
 
+        /* Baris Total / Hasil Rumus (Goldenrod / Kuning Gelap) */
         .total-row {
             background-color: #DAA520;
             font-weight: bold;
         }
 
+        /* Baris Selisih (Merah) */
         .diff-row {
             background-color: #FF0000;
-            color: white;
+            color: #ffffff;
             font-weight: bold;
+        }
+
+        /* Styling Input Angka agar menyatu dengan sel */
+        input[type="number"] {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            color: #000000;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Menghilangkan panah spinner pada input number untuk kerapian */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        /* Teks hasil perhitungan */
+        .result-text {
+            display: inline-block;
+            width: 100%;
         }
     </style>
 </head>
 <body>
 
 <table>
+    <!-- Baris Judul -->
     <tr class="header-row">
         <td colspan="2">RUMUS SALDO AWAL KAS</td>
     </tr>
+
+    <!-- Baris Input 1 -->
     <tr class="data-row">
         <td>SALDO AKHIR</td>
-        <td></td>
+        <td><input type="number" id="saldo_akhir" placeholder="0" oninput="hitung()"></td>
     </tr>
+    <!-- Baris Input 2 -->
     <tr class="data-row">
         <td>DANA CANCEL</td>
-        <td></td>
+        <td><input type="number" id="dana_cancel" placeholder="0" oninput="hitung()"></td>
     </tr>
+    <!-- Baris Input 3 -->
     <tr class="data-row">
         <td>TOTAL BIAYA</td>
-        <td></td>
+        <td><input type="number" id="total_biaya" placeholder="0" oninput="hitung()"></td>
     </tr>
+
+    <!-- Hasil Total 1 (= N42+N43+N44) -->
     <tr class="total-row">
         <td>SALDO AWAL</td>
-        <td>
-            <input type="text" value="=N42+N43+N44" style="width:100%; box-sizing:border-box; border:none; background:transparent; font-weight:bold; font-family:inherit; color:inherit; padding:0;">
-        </td>
+        <td><span id="res_saldo_awal_1" class="result-text">0</span></td>
     </tr>
+
+    <!-- Hasil Selisih (= N45-N51) -->
     <tr class="diff-row">
         <td>SELISIH</td>
-        <td>
-            <input type="text" value="=N45-N51" style="width:100%; box-sizing:border-box; border:none; background:transparent; font-weight:bold; font-family:inherit; color:inherit; padding:0;">
-        </td>
+        <td><span id="res_selisih" class="result-text">0</span></td>
     </tr>
+
+    <!-- Baris Input 4 -->
     <tr class="data-row">
         <td>SALDO BANK</td>
-        <td></td>
+        <td><input type="number" id="saldo_bank" placeholder="0" oninput="hitung()"></td>
     </tr>
+    <!-- Baris Input 5 -->
     <tr class="data-row">
         <td>DANA PENDINGAN</td>
-        <td></td>
+        <td><input type="number" id="dana_pendingan" placeholder="0" oninput="hitung()"></td>
     </tr>
+
+    <!-- Hasil Total 2 (= N49-N50) -->
     <tr class="total-row">
         <td>SALDO AWAL</td>
-        <td>
-            <input type="text" value="=N49-N50" style="width:100%; box-sizing:border-box; border:none; background:transparent; font-weight:bold; font-family:inherit; color:inherit; padding:0;">
-        </td>
+        <td><span id="res_saldo_awal_2" class="result-text">0</span></td>
     </tr>
 </table>
+
+<script>
+    function parseVal(id) {
+        let val = document.getElementById(id).value;
+        return val === "" ? 0 : parseFloat(val);
+    }
+
+    function hitung() {
+        // Ambil nilai input
+        let saldoAkhir = parseVal('saldo_akhir');
+        let danaCancel = parseVal('dana_cancel');
+        let totalBiaya = parseVal('total_biaya');
+        
+        let saldoBank = parseVal('saldo_bank');
+        let danaPendingan = parseVal('dana_pendingan');
+
+        // Rumus 1: Saldo Awal = SALDO AKHIR + DANA CANCEL + TOTAL BIAYA (Menyesuaikan logika N42+N43+N44)
+        let saldoAwal1 = saldoAkhir + danaCancel + totalBiaya;
+        document.getElementById('res_saldo_awal_1').innerText = saldoAwal1;
+
+        // Rumus 2: Saldo Awal (kedua) = SALDO BANK - DANA PENDINGAN (= N49-N50)
+        let saldoAwal2 = saldoBank - danaPendingan;
+        document.getElementById('res_saldo_awal_2').innerText = saldoAwal2;
+
+        // Rumus Selisih = Total Saldo Awal 1 - Total Saldo Awal 2 (= N45 - N51)
+        let selisih = saldoAwal1 - saldoAwal2;
+        document.getElementById('res_selisih').innerText = selisih;
+    }
+</script>
 
 </body>
 </html>
