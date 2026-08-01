@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator Saldo Awal Kas</title>
+    <title>Kalkulator Rumus Saldo Awal Kas Akurat</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,8 +17,8 @@
 
         table {
             border-collapse: collapse;
-            width: 420px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            width: 450px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             background-color: #ffffff;
         }
 
@@ -54,8 +54,8 @@
             font-weight: bold;
         }
 
-        /* Styling Input Angka agar menyatu dengan sel */
-        input[type="number"] {
+        /* Styling Input Angka agar menyatu dengan sel dan mendukung format ribuan */
+        input.editable-input {
             width: 100%;
             background: transparent;
             border: none;
@@ -66,22 +66,23 @@
             box-sizing: border-box;
             padding: 0;
             margin: 0;
+            text-align: left;
         }
 
-        /* Menghilangkan panah spinner pada input number untuk kerapian */
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type="number"] {
-            -moz-appearance: textfield;
+        /* Styling untuk baris kosong interaktif (sel baris total bagian atas yang bisa diisi jika diperlukan, atau dikosongkan sesuai gambar) */
+        .empty-interactive {
+            background-color: #FFD700;
         }
 
         /* Teks hasil perhitungan */
         .result-text {
             display: inline-block;
             width: 100%;
+            text-align: left;
+        }
+        
+        .negative-val {
+            color: #D8000C;
         }
     </style>
 </head>
@@ -90,82 +91,119 @@
 <table>
     <!-- Baris Judul -->
     <tr class="header-row">
-        <td colspan="2">RUMUS SALDO AWAL KAS</td>
+        <td colspan="2">RUMUS SALDO AWAL</td>
     </tr>
 
     <!-- Baris Input 1 -->
     <tr class="data-row">
         <td>SALDO AKHIR</td>
-        <td><input type="number" id="saldo_akhir" placeholder="0" oninput="hitung()"></td>
+        <td><input type="text" id="saldo_akhir" class="editable-input" value="7,612,656,676" oninput="formatInput(this); hitung();"></td>
     </tr>
     <!-- Baris Input 2 -->
     <tr class="data-row">
         <td>DANA CANCEL</td>
-        <td><input type="number" id="dana_cancel" placeholder="0" oninput="hitung()"></td>
+        <td><input type="text" id="dana_cancel" class="editable-input" value="51,120,210" oninput="formatInput(this); hitung();"></td>
     </tr>
-    <!-- Baris Input 3 -->
+    <!-- Baris Input 3 (Total Biaya - Nilai Minus di dalam kurung) -->
     <tr class="data-row">
         <td>TOTAL BIAYA</td>
-        <td><input type="number" id="total_biaya" placeholder="0" oninput="hitung()"></td>
+        <td><input type="text" id="total_biaya" class="editable-input negative-val" value="(4,385,934,674)" oninput="formatInput(this); hitung();"></td>
     </tr>
 
-    <!-- Hasil Total 1 (= N42+N43+N44) -->
+    <!-- Hasil Total 1 -->
     <tr class="total-row">
         <td>SALDO AWAL</td>
-        <td><span id="res_saldo_awal_1" class="result-text">0</span></td>
+        <td><span id="res_saldo_awal_1" class="result-text">3,277,842,212</span></td>
     </tr>
 
-    <!-- Hasil Selisih (= N45-N51) -->
+    <!-- Baris Kosong Interaktif sesuai Gambar -->
+    <tr class="data-row">
+        <td></td>
+        <td><input type="text" id="extra_input_1" class="editable-input" value="" oninput="hitung()"></td>
+    </tr>
+
+    <!-- Hasil Selisih -->
     <tr class="diff-row">
         <td>SELISIH</td>
         <td><span id="res_selisih" class="result-text">0</span></td>
     </tr>
 
+    <!-- Baris Kosong Interaktif kedua sesuai Gambar -->
+    <tr class="data-row">
+        <td></td>
+        <td><input type="text" id="extra_input_2" class="editable-input" value="" oninput="hitung()"></td>
+    </tr>
+
     <!-- Baris Input 4 -->
     <tr class="data-row">
         <td>SALDO BANK</td>
-        <td><input type="number" id="saldo_bank" placeholder="0" oninput="hitung()"></td>
+        <td><input type="text" id="saldo_bank" class="editable-input" value="3,302,139,789" oninput="formatInput(this); hitung();"></td>
     </tr>
     <!-- Baris Input 5 -->
     <tr class="data-row">
         <td>DANA PENDINGAN</td>
-        <td><input type="number" id="dana_pendingan" placeholder="0" oninput="hitung()"></td>
+        <td><input type="text" id="dana_pendingan" class="editable-input" value="24,297,577" oninput="formatInput(this); hitung();"></td>
     </tr>
 
-    <!-- Hasil Total 2 (= N49-N50) -->
+    <!-- Hasil Total 2 -->
     <tr class="total-row">
         <td>SALDO AWAL</td>
-        <td><span id="res_saldo_awal_2" class="result-text">0</span></td>
+        <td><span id="res_saldo_awal_2" class="result-text">3,277,842,212</span></td>
     </tr>
 </table>
 
 <script>
-    function parseVal(id) {
-        let val = document.getElementById(id).value;
-        return val === "" ? 0 : parseFloat(val);
+    // Fungsi untuk memformat angka dengan pemisah ribuan koma
+    function formatNumber(num) {
+        if (isNaN(num)) return "0";
+        let isNeg = num < 0;
+        let absNum = Math.abs(num);
+        let formatted = absNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return isNeg ? "(" + formatted + ")" : formatted;
+    }
+
+    // Fungsi untuk memparsing string angka berformat koma/kurung menjadi angka murni
+    function parseValue(valStr) {
+        if (!valStr) return 0;
+        let cleanStr = valStr.trim();
+        let isNeg = false;
+        if (cleanStr.startsWith("(") && cleanStr.endsWith(")")) {
+            isNeg = true;
+            cleanStr = cleanStr.substring(1, cleanStr.length - 1);
+        }
+        cleanStr = cleanStr.replace(/,/g, "");
+        let num = parseFloat(cleanStr);
+        if (isNaN(num)) return 0;
+        return isNeg ? -num : num;
+    }
+
+    function formatInput(el) {
+        let val = el.value;
+        // Biarkan pengguna mengetik secara bebas, nanti dihitung akurat
     }
 
     function hitung() {
-        // Ambil nilai input
-        let saldoAkhir = parseVal('saldo_akhir');
-        let danaCancel = parseVal('dana_cancel');
-        let totalBiaya = parseVal('total_biaya');
+        let saldoAkhir = parseValue(document.getElementById('saldo_akhir').value);
+        let danaCancel = parseValue(document.getElementById('dana_cancel').value);
+        let totalBiaya = parseValue(document.getElementById('total_biaya').value); // ini otomatis negatif jika ditulis (xxx)
         
-        let saldoBank = parseVal('saldo_bank');
-        let danaPendingan = parseVal('dana_pendingan');
-
-        // Rumus 1: Saldo Awal = SALDO AKHIR + DANA CANCEL + TOTAL BIAYA (Menyesuaikan logika N42+N43+N44)
+        // Logika rumus bagian atas: SALDO AKHIR + DANA CANCEL + TOTAL BIAYA (karena total biaya formatnya negatif, dia akan mengurangi secara otomatis)
         let saldoAwal1 = saldoAkhir + danaCancel + totalBiaya;
-        document.getElementById('res_saldo_awal_1').innerText = saldoAwal1;
+        document.getElementById('res_saldo_awal_1').innerText = formatNumber(saldoAwal1);
 
-        // Rumus 2: Saldo Awal (kedua) = SALDO BANK - DANA PENDINGAN (= N49-N50)
+        // Bagian bawah: SALDO BANK - DANA PENDINGAN
+        let saldoBank = parseValue(document.getElementById('saldo_bank').value);
+        let danaPendingan = parseValue(document.getElementById('dana_pendingan').value);
         let saldoAwal2 = saldoBank - danaPendingan;
-        document.getElementById('res_saldo_awal_2').innerText = saldoAwal2;
+        document.getElementById('res_saldo_awal_2').innerText = formatNumber(saldoAwal2);
 
-        // Rumus Selisih = Total Saldo Awal 1 - Total Saldo Awal 2 (= N45 - N51)
+        // Selisih = Saldo Awal 1 - Saldo Awal 2
         let selisih = saldoAwal1 - saldoAwal2;
-        document.getElementById('res_selisih').innerText = selisih;
+        document.getElementById('res_selisih').innerText = formatNumber(selisih);
     }
+
+    // Jalankan perhitungan awal saat load
+    hitung();
 </script>
 
 </body>
