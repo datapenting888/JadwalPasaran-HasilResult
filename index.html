@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabel Rumus Saldo Awal Kas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 400px; /* Lebar tabel agar terlihat proporsional */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            border: 1px solid black; /* Garis batas tabel tipis */
+            padding: 8px;
+            text-align: left;
+        }
+
+        /* Baris Header: Hijau dengan teks bold */
+        .header-row {
+            background-color: #00FF00; /* Hijau terang */
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Baris data standar: Kuning */
+        .data-row {
+            background-color: #FFD700; /* Emas/Kuning */
+        }
+
+        /* Baris total 'SALDO AWAL' (atas dan bawah): Lebih gelap */
+        .total-row {
+            background-color: #DAA520; /* Goldenrod (lebih gelap sedikit dari data-row) */
+            font-weight: bold;
+        }
+
+        /* Baris 'SELISIH': Merah terang */
+        .diff-row {
+            background-color: #FF0000; /* Merah terang */
+            color: white; /* Teks putih agar terbaca di latar merah */
+            font-weight: bold;
+        }
+
+        /* Styling untuk memastikan semua teks rata kiri kecuali header */
+        td:first-child {
+            text-align: left;
+        }
+        
+        /* Styling untuk sel rumus agar rata kiri (sesuai gambar) */
+        td:last-child {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<table>
+    <!-- Baris Judul -->
+    <tr class="header-row">
+        <td colspan="2">RUMUS SALDO AWAL KAS</td>
+    </tr>
+
+    <!-- Baris Data Standar -->
+    <tr class="data-row">
+        <td>SALDO AKHIR</td>
+        <td></td>
+    </tr>
+    <tr class="data-row">
+        <td>DANA CANCEL</td>
+        <td></td>
+    </tr>
+    <tr class="data-row">
+        <td>TOTAL BIAYA</td>
+        <td></td>
+    </tr>
+
+    <!-- Baris Total Pertama -->
+    <tr class="total-row">
+        <td>SALDO AWAL</td>
+        <td>=N42+N43+N44</td>
+    </tr>
+
+    <!-- Baris Selisih -->
+    <tr class="diff-row">
+        <td>SELISIH</td>
+        <td>=N45-N51</td>
+    </tr>
+
+    <!-- Baris Data Lanjutan -->
+    <tr class="data-row">
+        <td>SALDO BANK</td>
+        <td></td>
+    </tr>
+    <tr class="data-row">
+        <td>DANA PENDINGAN</td>
+        <td></td>
+    </tr>
+
+    <!-- Baris Total Kedua -->
+    <tr class="total-row">
+        <td>SALDO AWAL</td>
+        <td>=N49-N50</td>
+    </tr>
+</table>
+
+</body>
+</html>
