@@ -429,10 +429,46 @@
     transform:translateY(0);
   }
 
+  .simpan-btn-wrap{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    justify-content:center;
+    margin-top:-6px;
+  }
+  .simpan-btn{
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:11.5px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#241c10;
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+    border:1px solid var(--gold-deep);
+    border-radius:20px;
+    padding:9px 26px;
+    cursor:pointer;
+    width:100%;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+    transition:transform .12s ease, background .12s ease, box-shadow .12s ease;
+  }
+  .simpan-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 22px rgba(0,0,0,.5);
+  }
+  .simpan-btn:active{
+    transform:translateY(0);
+  }
+  .simpan-btn.simpan-btn-success{
+    background:linear-gradient(180deg,#8fe6b1,#5fce8f);
+    border-color:#3f9c68;
+    color:#08150d;
+  }
+
   /* ===== LAYOUT SANDINGAN (2 KOLOM) ===== */
   .layout{
     width:100%;
-    max-width:1320px;
+    max-width:1380px;
     display:flex;
     flex-direction:row;
     align-items:flex-start;
@@ -454,9 +490,9 @@
     flex-direction:column;
     align-items:stretch;
     gap:10px;
-    flex:1 1 640px;
+    flex:1 1 680px;
     min-width:320px;
-    max-width:900px;
+    max-width:980px;
   }
   .col-right .section-tag{ max-width:none; }
   .col-right .block{ max-width:none; }
@@ -473,7 +509,7 @@
   }
   .jadwal-table{
     width:100%;
-    min-width:640px;
+    min-width:700px;
     border-collapse:collapse;
   }
   .jadwal-table thead th{
@@ -1009,11 +1045,14 @@
 </table>
 </div>
 
+<div class="simpan-btn-wrap">
+  <button type="button" id="simpanDataBtn" class="simpan-btn">Simpan Data</button>
+</div>
+
 </div>
 <div class="col-right">
 
 <!-- JADWAL PASARAN -->
-<div class="section-tag" id="jadwal-pasaran">Jadwal Pasaran</div>
 <div class="block jadwal-wrap">
   <div class="jadwal-scroll">
   <table class="jadwal-table">
@@ -1082,6 +1121,50 @@ function autoFitText(el){
 function autoFitAll(){
   document.querySelectorAll('.editable-text:not(.shio-nums)').forEach(autoFitText);
 }
+
+// ===== Referensi Shio: perubahan disimpan permanen hanya saat tombol "Simpan Data" diklik =====
+const SHIO_STORAGE_KEY = 'shioTableData';
+
+function loadShioStorage(){
+  try {
+    return JSON.parse(localStorage.getItem(SHIO_STORAGE_KEY)) || [];
+  } catch(e){
+    return [];
+  }
+}
+
+function restoreShioTable(){
+  const saved = loadShioStorage();
+  if(!saved.length) return;
+  let i = 0;
+  document.querySelectorAll('.shio-table tr').forEach(tr=>{
+    const nameCell = tr.querySelector('.shio-name');
+    const numsCell = tr.querySelector('.shio-nums');
+    if(!nameCell || !numsCell) return;
+    const data = saved[i];
+    if(data){
+      if(data.name !== undefined) nameCell.textContent = data.name;
+      if(data.nums !== undefined) numsCell.textContent = data.nums;
+    }
+    i++;
+  });
+}
+
+function simpanShioData(){
+  const data = [];
+  document.querySelectorAll('.shio-table tr').forEach(tr=>{
+    const nameCell = tr.querySelector('.shio-name');
+    const numsCell = tr.querySelector('.shio-nums');
+    if(!nameCell || !numsCell) return;
+    data.push({
+      name: nameCell.textContent.trim(),
+      nums: numsCell.textContent.trim()
+    });
+  });
+  localStorage.setItem(SHIO_STORAGE_KEY, JSON.stringify(data));
+}
+
+restoreShioTable();
 
 // Build a lookup { "01": "Kuda", ... } straight from the (editable) SHIO table
 function getShioLookup(){
@@ -1340,19 +1423,66 @@ const dataJadwal = [
 ];
 
 const jadwalBody = document.getElementById('jadwalBody');
+const JADWAL_STORAGE_KEY = 'jadwalPasaranData';
+const JADWAL_DATE_KEY = 'jadwalPasaranDate';
 
-dataJadwal.forEach((row) => {
+function getTodayStr() {
+  return new Date().toDateString();
+}
+
+function loadJadwalStorage() {
+  try {
+    return JSON.parse(localStorage.getItem(JADWAL_STORAGE_KEY)) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+const jadwalSaved = loadJadwalStorage();
+const jadwalSavedDate = localStorage.getItem(JADWAL_DATE_KEY);
+const jadwalDayChanged = jadwalSavedDate !== getTodayStr();
+
+dataJadwal.forEach((row, idx) => {
+  const saved = jadwalSaved[idx] || {};
+  const tutup = saved.tutup !== undefined ? saved.tutup : row[1];
+  const result = saved.result !== undefined ? saved.result : row[2];
+  const jadwal = saved.jadwal !== undefined ? saved.jadwal : row[3];
+  // Checkbox otomatis terhapus (tidak dipulihkan) jika sudah pergantian hari
+  const checked = jadwalDayChanged ? false : !!saved.checked;
+
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><input type="checkbox"></td>
+    <td><input type="checkbox" ${checked ? 'checked' : ''}></td>
     <td class="jadwal-nama">${row[0]}</td>
-    <td class="jadwal-editable" contenteditable="true">${row[1]}</td>
-    <td class="jadwal-editable" contenteditable="true">${row[2]}</td>
-    <td class="jadwal-editable" contenteditable="true">${row[3]}</td>
-    <td class="jadwal-hasil">BELUM RESULT</td>
+    <td class="jadwal-editable" contenteditable="true">${tutup}</td>
+    <td class="jadwal-editable" contenteditable="true">${result}</td>
+    <td class="jadwal-editable" contenteditable="true">${jadwal}</td>
+    <td class="jadwal-hasil${checked ? ' jadwal-result' : ''}">${checked ? 'RESULT' : 'BELUM RESULT'}</td>
   `;
   jadwalBody.appendChild(tr);
 });
+
+// Kumpulkan seluruh isi tabel Jadwal Pasaran lalu simpan ke localStorage
+function simpanJadwalData() {
+  const rows = jadwalBody.querySelectorAll('tr');
+  const data = [];
+  rows.forEach((tr) => {
+    const editable = tr.querySelectorAll('.jadwal-editable');
+    const checkbox = tr.querySelector('input[type="checkbox"]');
+    data.push({
+      tutup: editable[0] ? editable[0].textContent.trim() : '',
+      result: editable[1] ? editable[1].textContent.trim() : '',
+      jadwal: editable[2] ? editable[2].textContent.trim() : '',
+      checked: checkbox ? checkbox.checked : false
+    });
+  });
+  localStorage.setItem(JADWAL_STORAGE_KEY, JSON.stringify(data));
+  localStorage.setItem(JADWAL_DATE_KEY, getTodayStr());
+}
+
+// Simpan langsung saat halaman dimuat (memastikan tanggal & checkbox yang
+// sudah dibersihkan akibat pergantian hari langsung tercatat)
+simpanJadwalData();
 
 jadwalBody.addEventListener('change', (e) => {
   if (e.target.type === 'checkbox') {
@@ -1365,8 +1495,51 @@ jadwalBody.addEventListener('change', (e) => {
       hasilCell.textContent = 'BELUM RESULT';
       hasilCell.classList.remove('jadwal-result');
     }
+    simpanJadwalData();
   }
 });
+
+// Real-time: setiap perubahan pada kolom Jam Tutup, Result, atau Jadwal langsung disimpan
+jadwalBody.addEventListener('input', (e) => {
+  if (e.target.classList.contains('jadwal-editable')) {
+    simpanJadwalData();
+  }
+});
+
+// Tombol "Simpan Data" manual di bawah Rumus Saldo Awal (memberi konfirmasi visual)
+const simpanDataBtn = document.getElementById('simpanDataBtn');
+if (simpanDataBtn) {
+  simpanDataBtn.addEventListener('click', () => {
+    simpanJadwalData();
+    if (typeof simpanShioData === 'function') simpanShioData();
+    const originalText = simpanDataBtn.textContent;
+    simpanDataBtn.textContent = 'Data Tersimpan ✓';
+    simpanDataBtn.classList.add('simpan-btn-success');
+    setTimeout(() => {
+      simpanDataBtn.textContent = originalText;
+      simpanDataBtn.classList.remove('simpan-btn-success');
+    }, 1500);
+  });
+}
+
+// Pantau pergantian hari secara berkala selagi halaman tetap terbuka,
+// agar checkbox otomatis terhapus tanpa perlu reload manual
+setInterval(() => {
+  const lastDate = localStorage.getItem(JADWAL_DATE_KEY);
+  if (lastDate && lastDate !== getTodayStr()) {
+    const checkboxes = jadwalBody.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach((cb) => {
+      if (cb.checked) {
+        cb.checked = false;
+        const tr = cb.closest('tr');
+        const hasilCell = tr.querySelector('.jadwal-hasil');
+        hasilCell.textContent = 'BELUM RESULT';
+        hasilCell.classList.remove('jadwal-result');
+      }
+    });
+    simpanJadwalData();
+  }
+}, 60000);
 </script>
 
 <!-- Script HITUNGAN TOTO SINGAPORE (tidak diubah) -->
